@@ -48,66 +48,91 @@ class DE:
         self.pop = pop
         return pop
     
+    def current_to_best_mutation(self, vect_i):
+        """
+        returns the trial vector
+        """
+        # the best in pop
+        index_of_selected_best = self.best_in_pop()[1]
+        # generte two randomly
+        x1 = -1
+        x2 = -1
+        while x1 == x2 or x1 == index_of_selected_best or x2 == index_of_selected_best:
+            x1 = np.random.randint(0,self.population_size)
+            x2 = np.random.randint(0,self.population_size)
+        # calculate the trial vvector
+        trial_vector = vect_i + self.Scaling_Factor * ( self.pop[index_of_selected_best] - vect_i ) + self.Scaling_Factor * ( self.pop[x1] - self.pop[x2] )
+
+        return trial_vector
+    
+    def current_to_rand_mutation(self, vect_i):
+        # generate random scaling factor
+        rand_F = np.random.randint(0,1)
+        # generate 3 randomly
+        x1 = -1
+        x2 = -1
+        x3 = -1
+        while x1 == x2 or x1 == x3 or x2 == x3:
+            x1 = np.random.randint(0,self.population_size)
+            x2 = np.random.randint(0,self.population_size)
+            x3 = np.random.randint(0,self.population_size)
+        # calculate the trial vector
+        trial_vector = vect_i + rand_F * (self.pop[x1] - vect_i) + self.Scaling_Factor * (self.pop[x2] - self.pop[x3])
+        
+        return trial_vector
+
+    def rand_mutation(self, strategy, num_diff):
+        """
+        4 possible schemes : rand/1 , best/1 , rand/2 , best/2 
+        strategy : "rand" or "best"
+        num_diff : 1 or 2
+        """
+        # compute trial_vector depending on strategy : rand/1 , best/1 , rand/2 , best/2
+        if strategy == "rand":
+            index_of_selected = np.random.randint(0,self.population_size)
+        elif strategy == "best":
+            index_of_selected = self.best_in_pop()[1]
+        
+        target_vector = self.pop[index_of_selected]
+
+        # select two/four vectors randomely (insure mutually diffrent)
+        x1 = -1
+        x2 = -1
+        while x1 == x2 or x1 == index_of_selected or x2 == index_of_selected:
+            x1 = np.random.randint(0,self.population_size)
+            x2 = np.random.randint(0,self.population_size)
+
+        # mutate
+        trial_vector = target_vector + self.Scaling_Factor * (self.pop[x1] - self.pop[x2])
+
+        if num_diff == 2:
+            x3 = -1
+            x4 = -1
+            while x3 == x4 or x3 == x2 or x3 == x1 or x4 == x1 or x4 == x2 or x3 == index_of_selected or x4 == index_of_selected:
+                x1 = np.random.randint(0,self.population_size)
+                x2 = np.random.randint(0,self.population_size)
+            
+            # add to trial vector
+            trial_vector += self.Scaling_Factor * (self.pop[x3] - self.pop[x4])
+        
+        return trial_vector
+
+    
     def mutation(self, vect_i):
         """
         target_vector_selection_strategy : it can be "rand" or "best"
         """
         # compute trial_vector depending on strategy : current-to-best/1 , current-to-rand/1
         if self.target_vector_selection_strategy == "current-to-best":
-            # the best in pop
-            index_of_selected_best = self.best_in_pop()[1]
-            # generte two randomly
-            x1 = -1
-            x2 = -1
-            while x1 == x2 or x1 == index_of_selected_best or x2 == index_of_selected_best:
-                x1 = np.random.randint(0,self.population_size)
-                x2 = np.random.randint(0,self.population_size)
-            # calculate the trial vvector
-            trial_vector = vect_i + self.Scaling_Factor * ( self.pop[index_of_selected_best] - vect_i ) + self.Scaling_Factor * ( self.pop[x1] - self.pop[x2] )
-        
-        elif self.target_vector_selection_strategy == "current-to-rand":
-            # generate random scaling factor
-            rand_F = np.random.randint(0,1)
-            # generate 3 randomly
-            x1 = -1
-            x2 = -1
-            x3 = -1
-            while x1 == x2 or x1 == x3 or x2 == x3:
-                x1 = np.random.randint(0,self.population_size)
-                x2 = np.random.randint(0,self.population_size)
-                x3 = np.random.randint(0,self.population_size)
-            # calculate the trial vector
-            trial_vector = vect_i + rand_F * (self.pop[x1] - vect_i) + self.Scaling_Factor * (self.pop[x2] - self.pop[x3])
+            # fucntion call
+            trial_vector = self.current_to_best_mutation(vect_i)
 
+        elif self.target_vector_selection_strategy == "current-to-rand":
+            # function call
+            trial_vector = self.current_to_rand_mutation(vect_i)
         else:
             # compute trial_vector depending on strategy : rand/1 , best/1 , rand/2 , best/2
-            if self.target_vector_selection_strategy == "rand":
-                index_of_selected = np.random.randint(0,self.population_size)
-            elif self.target_vector_selection_strategy == "best":
-                index_of_selected = self.best_in_pop()[1]
-            
-            target_vector = self.pop[index_of_selected]
-
-            # select two/four vectors randomely (insure mutually diffrent)
-            x1 = -1
-            x2 = -1
-            while x1 == x2 or x1 == index_of_selected or x2 == index_of_selected:
-                x1 = np.random.randint(0,self.population_size)
-                x2 = np.random.randint(0,self.population_size)
-
-            # mutate
-            trial_vector = target_vector + self.Scaling_Factor * (self.pop[x1] - self.pop[x2])
-
-            if self.number_of_differentials == 2:
-                x3 = -1
-                x4 = -1
-                while x3 == x4 or x3 == x2 or x3 == x1 or x4 == x1 or x4 == x2 or x3 == index_of_selected or x4 == index_of_selected:
-                    x1 = np.random.randint(0,self.population_size)
-                    x2 = np.random.randint(0,self.population_size)
-                
-                # add to trial vector
-                trial_vector += self.Scaling_Factor * (self.pop[x3] - self.pop[x4])
-
+            trial_vector = self.rand_mutation(self.target_vector_selection_strategy, self.number_of_differentials)
 
         if trial_vector[0] < -5:
             trial_vector[0] = -5
@@ -187,7 +212,7 @@ def function_evaluation(point):
 
 if __name__ == "__main__":
     num_generations = 100
-    differential_evolution = DE(50, 2, 0.5, 0.7,target_vector_selection_strategy="rand", number_differentials=1)
+    differential_evolution = DE(50, 2, 0.5, 0.7,target_vector_selection_strategy="current-to-best", number_differentials=1)
     evals_of_generations = differential_evolution.do_evolution(num_generations,verbose=False)
 
     print(f"the optimal evaluation : {evals_of_generations[-1]}")
