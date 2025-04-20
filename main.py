@@ -1,21 +1,11 @@
-import numpy as np
+from DE import *
 
-population_size = 5
-problem_dimension = 2
-Stopping_Criteria = Maximum_Num_iterations = 2
-Scaling_Factor = 0.5
-Crossover_Probability = 0.7
+if __name__ == "__main__":
+    num_generations = 100
+    differential_evolution = DE(50, 2, 0.5, 0.7,variant="JDE",target_vector_selection_strategy="rand", number_differentials=2)
+    evals_of_generations = differential_evolution.do_evolution(num_generations,verbose=False)
 
-def function_evaluation(point):
-    """
-    point : is a tuple of (x,y)
-    """
-    return np.square(point[0]) + np.square(point[1])
+    print(f"the optimal evaluation : {evals_of_generations[-1]}")
 
-def initialize_pop(pop_size):
-    pop = []
-    for i in range(pop_size):
-        x = np.random.uniform(-5,5,2)
-        pop.append(x)
-
-    return pop
+    plt.plot(range(num_generations),evals_of_generations)
+    plt.show()

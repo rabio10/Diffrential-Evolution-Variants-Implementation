@@ -109,14 +109,24 @@ class DE:
             x3 = -1
             x4 = -1
             while x3 == x4 or x3 == x2 or x3 == x1 or x4 == x1 or x4 == x2 or x3 == index_of_selected or x4 == index_of_selected:
-                x1 = np.random.randint(0,self.population_size)
-                x2 = np.random.randint(0,self.population_size)
+                x3 = np.random.randint(0,self.population_size)
+                x4 = np.random.randint(0,self.population_size)
             
             # add to trial vector
             trial_vector += self.Scaling_Factor * (self.pop[x3] - self.pop[x4])
         
         return trial_vector
 
+    def boundary_verification(self, vector):
+        if vector[0] < -5:
+            vector[0] = -5
+        elif vector[0] > 5:
+            vector[0] = 5
+        if vector[1] < -5:
+            vector[1] = -5
+        elif vector[1] > 5:
+            vector[1] = 5
+        return vector
     
     def mutation(self, vect_i):
         """
@@ -183,8 +193,35 @@ class DE:
             self.pop = new_gen
         
         elif self.variant == "CODE":
+            # select parametrs randomly
+            parameter_candidate_pool = [(1.0, 0.1), (1.0, 0.9), (0.8, 0.2)] # (F , CR)
+            strategies = [("rand", 1), ("rand", 2), ("current-to-rand", 1)]
             for parent_vect in self.pop:
-                pass
+                new_vects = []
+                evals_of_new_vects = []
+                # do the 3 strategies
+                for st in strategies:
+                    selected_params = parameter_candidate_pool[np.random.randint(0,3)]
+                    self.Scaling_Factor = selected_params[0]
+                    self.Crossover_Probability = selected_params[1]
+                    # do mutation in 3 schemes
+                    self.target_vector_selection_strategy = st[0]
+                    self.number_of_differentials = st[1]
+                    trial_vect = self.mutation(parent_vect)
+                    # crossover
+                    new_vect = self.crossover(parent_vect, trial_vect)
+                    ev = function_evaluation(new_vect)
+                    # add to list
+                    new_vects.append(new_vect)
+                    evals_of_new_vects.append(ev)
+                # take the best of the three
+                evals_of_new_vects = np.array(evals_of_new_vects)
+                index_of_best_of_three = np.argmin(evals_of_new_vects)
+                # append to the new gen
+                new_gen.append(new_vects[index_of_best_of_three])
+
+            self.pop = new_gen
+                
         return new_gen
     
 
@@ -192,14 +229,46 @@ class DE:
         self.Maximum_Num_iterations = num_generations
         self.initialize_pop()
         evals_of_generations = []
-        for i in range(num_generations):
-            best = self.best_in_pop()
-            if verbose:
-                print(f"Gen {i}, the best : {self.pop[best[1]]} with f = {best[0]}")
-                print(np.array(self.pop))
-                print(np.array(self.best_in_pop()[2]))
-            evals_of_generations.append(best[0])
-            self.next_generation()
+        if self.variant == "JDE":
+            # the JDE works on classic DE with adaptif parametrs
+            self.variant = "DE"
+            new_CR = self.Crossover_Probability
+            new_F = self.Scaling_Factor
+            F_l = 0.1
+            F_u = 0.9
+            tau = 0.1
+            for i in range(num_generations):
+                best = self.best_in_pop()
+                if verbose:
+                    print(f"Gen {i}, the best : {self.pop[best[1]]} with f = {best[0]}")
+                    print(np.array(self.pop))
+                    print(np.array(self.best_in_pop()[2]))
+                evals_of_generations.append(best[0])
+                self.next_generation()
+                # new F 
+                rand = [np.random.uniform() for i in range(4)]
+                if rand[1] < tau:
+                    new_F = F_l + rand[0] * F_u
+                else:
+                    new_F = self.Scaling_Factor
+                self.Scaling_Factor = new_F
+                # new CR
+                if rand[3] < tau:
+                    new_CR = rand[2]
+                else:
+                    new_CR = self.Crossover_Probability
+                self.Scaling_Factor = new_CR
+        
+        else:
+            for i in range(num_generations):
+                best = self.best_in_pop()
+                if verbose:
+                    print(f"Gen {i}, the best : {self.pop[best[1]]} with f = {best[0]}")
+                    print(np.array(self.pop))
+                    print(np.array(self.best_in_pop()[2]))
+                evals_of_generations.append(best[0])
+                self.next_generation()
+
         return evals_of_generations
 
 
@@ -209,13 +278,3 @@ def function_evaluation(point):
         point : is a tuple of (x,y)
         """
         return np.square(point[0]) + np.square(point[1])
-
-if __name__ == "__main__":
-    num_generations = 100
-    differential_evolution = DE(50, 2, 0.5, 0.7,target_vector_selection_strategy="current-to-best", number_differentials=1)
-    evals_of_generations = differential_evolution.do_evolution(num_generations,verbose=False)
-
-    print(f"the optimal evaluation : {evals_of_generations[-1]}")
-
-    plt.plot(range(num_generations),evals_of_generations)
-    plt.show()
