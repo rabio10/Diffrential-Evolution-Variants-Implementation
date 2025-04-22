@@ -29,23 +29,17 @@ class DE:
         index_best_value = evals.index(best_value)
         return best_value, index_best_value, evals
 
-    def initialize_pop_custom(self):
-        pop = [
-            np.array([1.7667, -4.1337]),
-            np.array([4.8071, 0.6642]),
-            np.array([-2.9232, -4.0439]),
-            np.array([-4.3747, -4.7421]),
-            np.array([-1.6587, 0.5680])
-        ]
-        self.pop = pop
-        return pop
 
     def initialize_pop(self):
+        # ensure reproducibility of population for testing purposes
+        np.random.seed(5)
         pop = []
         for i in range(self.population_size):
             x = np.random.uniform(-5,5,self.problem_dimension)
             pop.append(x)
         self.pop = pop
+        # reset the randomness of generation 
+        np.random.seed()
         return pop
     
     def current_to_best_mutation(self, vect_i):
