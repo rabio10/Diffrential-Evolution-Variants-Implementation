@@ -25,8 +25,11 @@ if __name__ == "__main__":
     differential_evolution = DE(50, 2, 0.5, 0.7,variant="CODE")
     evals.append((differential_evolution.do_evolution(num_generations,verbose=False),"CODE"))
     # JDE
-    differential_evolution = DE(50, 2, 0.5, 0.7,variant="JDE",target_vector_selection_strategy="rand", number_differentials=2)
+    differential_evolution = DE(50, 2, 0.5, 0.7,variant="JDE")
     evals.append((differential_evolution.do_evolution(num_generations,verbose=False),"JDE"))
+    # JADE
+    differential_evolution = DE(50, 2, 0.5, 0.7,variant="JADE")
+    evals.append((differential_evolution.do_evolution(num_generations,verbose=False),"JADE"))
 
     only_opt_evals = []
     for i in range(len(evals)):
@@ -38,4 +41,4 @@ if __name__ == "__main__":
     print(f"the optimal evaluation : {np.min(only_opt_evals)} with {evals[np.argmin(only_opt_evals)][1]}")
 
     # temp execution 
-    # qualité de solution 
+    # qualité de solution

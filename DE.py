@@ -29,6 +29,14 @@ class DE:
         index_best_value = evals.index(best_value)
         return best_value, index_best_value, evals
 
+    def best_in_pop_p(self, pop):
+        evals = []
+        for vect in pop:
+            ev = function_evaluation(vect)
+            evals.append(ev)
+        best_value = min(evals)
+        index_best_value = evals.index(best_value)
+        return best_value, index_best_value, evals
 
     def initialize_pop(self):
         # ensure reproducibility of population for testing purposes
@@ -46,8 +54,22 @@ class DE:
         """
         returns the trial vector
         """
-        # the best in pop
-        index_of_selected_best = self.best_in_pop()[1]
+        if self.variant == "JADE":
+            # set p 
+            p = 0.3
+            size_pbest = int(p * len(self.pop))
+            indexes_pbest_in_pop = []
+            copy_pop = self.pop.copy()
+            for i in range(size_pbest):
+                index = self.best_in_pop_p(copy_pop)[1]
+                indexes_pbest_in_pop.append(index)
+                copy_pop.pop(index)
+            # choose randomely 
+            np.random.shuffle(indexes_pbest_in_pop)
+            index_of_selected_best = np.random.choice(indexes_pbest_in_pop)
+        else:
+            # the best in pop
+            index_of_selected_best = self.best_in_pop()[1]
         # generte two randomly
         x1 = -1
         x2 = -1
@@ -127,7 +149,7 @@ class DE:
         target_vector_selection_strategy : it can be "rand" or "best"
         """
         # compute trial_vector depending on strategy : current-to-best/1 , current-to-rand/1
-        if self.target_vector_selection_strategy == "current-to-best":
+        if self.target_vector_selection_strategy == "current-to-best" or self.variant == "JADE":
             # fucntion call
             trial_vector = self.current_to_best_mutation(vect_i)
 
@@ -214,6 +236,13 @@ class DE:
                 # append to the new gen
                 new_gen.append(new_vects[index_of_best_of_three])
 
+            self.pop = new_gen
+        
+        elif self.variant == "JADE":
+            for parent_vect in self.pop:
+                trial_vect = self.mutation(parent_vect)
+                new_vect = self.crossover(parent_vect, trial_vect)
+                new_gen.append(new_vect)
             self.pop = new_gen
                 
         return new_gen
