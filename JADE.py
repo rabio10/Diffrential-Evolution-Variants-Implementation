@@ -142,7 +142,7 @@ class DiffEvolution:
 
 
 class JADE(DiffEvolution):
-    def __init__(self, populationSize, problemDim, scalingFactor, crossOverProb, searchSpace, stopCriteria, fitnessFunt, p, NbrInstallations):
+    def __init__(self,Problem, populationSize, problemDim, scalingFactor, crossOverProb, searchSpace, stopCriteria, fitnessFunt, p, NbrInstallations):
         super().__init__(populationSize, problemDim, scalingFactor, crossOverProb, searchSpace, stopCriteria, fitnessFunt)
         self.SCR = None
         self.SF = None
@@ -155,9 +155,10 @@ class JADE(DiffEvolution):
 
         self.CR_list=[]
         self.F_list=[]
+
+
+        #adapting to the problem:
         self.nbrInstall= NbrInstallations
-
-
     #Initialisation same as parent Class.. no need to overwrite it
     
     def ParameterGeneration(self,):
@@ -180,11 +181,12 @@ class JADE(DiffEvolution):
 
         mutantVect= [0 for i in range(self.probDim)]
         for para in range(self.probDim):
-            mutantVect[para] = parentVect[para] + self.F_list[IndexParentVect]*(X_best[para] -
-                    parentVect[para])+ self.F_list[IndexParentVect]*(randomIndiv1[para] - randomIndiv2[para])
-            return mutantVect
-    
-    #exemple d'indiv: [3, 1, 0,    1, 2, 1, 3]
+            mutantVect[para] = int(parentVect[para] + self.F_list[IndexParentVect]*(X_best[para] -
+                    parentVect[para])+ self.F_list[IndexParentVect]*(randomIndiv1[para] - randomIndiv2[para]))
+        return mutantVect
+
+
+#exemple d'indiv: [3, 1, 0,    1, 2, 1, 3]
     #nbrInstall = 3
     def CrossOver(self, population, IndexParentVect, mutantVect):
         parentVectP1= population[IndexParentVect][0: self.nbrInstall] #[3, 1, 0]
@@ -200,6 +202,7 @@ class JADE(DiffEvolution):
                 trialVect[i] = mutantVect[i]
             else: 
                 trialVect[i] = parentVectP1[i]
+        #print(trialVect)
         #return trialVect
     
         #for Prt2 (les clients dans l'indiv)
@@ -209,8 +212,10 @@ class JADE(DiffEvolution):
             if i== j_rand2 or prob< self.CR_list[IndexParentVect]:
                 trialVect[i] = mutantVect[i]
             else: 
-                trialVect[i] = parentVectP2[i-3]
+                trialVect[i] = parentVectP2[i-self.nbrInstall]
+        #print(trialVect)    
 
+        #print(trialVect)
         return trialVect
     
 
@@ -228,7 +233,7 @@ class JADE(DiffEvolution):
 
 
 
-    def main(self, nbrGenerations, populationTest,c=0.1):
+    def main(self, nbrGenerations, populationTest, c=0.1):
         L={}
         E =[]
 
@@ -236,6 +241,7 @@ class JADE(DiffEvolution):
             population = populationTest
         else:
             population = self.Initialization()
+            #print('initialisation',population)
             
         self.SCR = []
         self.SF = []
@@ -256,7 +262,6 @@ class JADE(DiffEvolution):
 
 
             #Calculate minFitFunct for eachGeneration
-            print(population)
             evalGen= [self.fitFunct(i) for i in population]
             evalMin= min(evalGen)
             E.append(evalMin)
@@ -268,21 +273,32 @@ class JADE(DiffEvolution):
            #print(self.uCR)
 
 #here: lets define the top p of the population:
-            topP=[] #population ordonnee
-            eval_Dict= {self.fitFunct(indiv):indiv for indiv in population} 
-            for i in sorted(eval_Dict.keys()):
-                topP.append(eval_Dict[i])
-            #rint(len(topP), len(population))
-          # print('comapre pourcentage m3a len',self.p*self.popSize,len(sorted(eval_Dict.keys())) )
-          # print(len(topP), int(self.p*len(population)))
-            topPercent = [topP[i] for i in range(int(self.p*len(population)))]
+            
+
+            eval_Dict= {i: self.fitFunct(population[i]) for i in range(len(population))}
+
+            #topPercentList222 = sorted(eval_Dict.items(), key=lambda item: item[1])
+            #print('len liste ordonnes',len(topPercentList222))
+
+            topPercentList = sorted(eval_Dict.items(), key=lambda item: item[1])[: int(self.p*len(population))]
+            #sorted_dict=[(index: fit(popoulaion[index])] top p 
+
+
+            topPercent = [[item[0] for item in topPercentList ]]
 
             for IndexIndiv in range(self.popSize):
+                #print('indiv debut',population[IndexIndiv])
+
                 mutantVect= self.Mutation_indiv(IndexIndiv, population, topPercent)
+                #print('mutant vect',mutantVect)
+
                 trialVect = self.CrossOver(population, IndexIndiv, mutantVect)
+                #print('trial vect',trialVect)
+
                 #here the self.SCR and self.SF are updated
                 selectedVect = self.Selection(population, IndexIndiv, trialVect)
-
+                #print('selected indiv',selectedVect)
+                
                 PopulationCopy.append(selectedVect)
 
            #print(len(PopulationCopy))
@@ -294,7 +310,6 @@ class JADE(DiffEvolution):
             self.uF = (1-c)* self.uF + c* LehmerMean(self.SF)
 
         return L,E
-    
 
 
 

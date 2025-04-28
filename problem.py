@@ -1,7 +1,7 @@
 import numpy as np
 
 class Problem:
-    def __init__(self, nbreInstall, nbreClients,Demande,  Capacity, CoutAffect, CoutOuvert, B):
+    def __init__(self,searchSpace, nbreInstall, nbreClients,Demande,  Capacity, CoutAffect, CoutOuvert, B):
         #Cout = array dim : nbreClients*  nbreInstall
         self.nbrInstall = nbreInstall #3--> les indices des install: 1, 2, 3
         self.nbrClients = nbreClients #4--> les indices des clients:  1, 2, 3, 4
@@ -13,68 +13,99 @@ class Problem:
         self.CoutOuvert = CoutOuvert #[3000, 8000, 5000]--> 3000 est le cout pour level 1, 8000 pour level 2
         self.B= B
         self.Demande= Demande #[30, 89, 78, 99]
-        
-        #exemple d'indiv: [3, 1, 0,    1, 2, 1, 3]
+        self.searchSpace= searchSpace
     
-
-    def penalty (self, indiv, coeff1=5, coeff2= 5, coeff3= 5):
-        Install = indiv[0: self.nbrInstall+1]
-        Clients = indiv[self.nbrInstall:]
-
+    def fct_obj_prob(self, indiv):
         #obj:
         obj_indiv= 0
         for i in range(0, self.nbrClients):  # 0,1,2,3
             install_j= indiv[i+ self.nbrInstall] 
             #print(install_j)  #1, 2, 1, 3
-
-            Cout_j = self.CoutAffect[i][install_j-1]
+            #print(indiv)
+            #print('coutAffect ligne et colonne',i, install_j -1)
+            Cout_j = self.CoutAffect[i][install_j -1]
 
             d_i= self.Demande[i]
 
             obj_indiv = obj_indiv + d_i* Cout_j
+        return obj_indiv
         
-        #exemple d'indiv: [3, 1, 0,    1, 2, 1, 3]
+
+    def penalty (self, indiv, coeff1=5, coeff2= 5, coeff3= 5, coeff4= 50):
+
+        #Violation4: indiv params out of researchSpace
+        violation4=0
+        #print(self.searchSpace)
+        for paramIndex in range(self.nbrClients+self.nbrInstall):
+            #print(indiv[paramIndex], self.searchSpace[paramIndex][0])
+            if indiv[paramIndex]< self.searchSpace[paramIndex][0] or indiv[paramIndex]> self.searchSpace[paramIndex][1]:
+                violation4 +=1
+
+        if violation4>0:
+            return coeff4* violation4
+        else:
+
+            #obj:
+            obj_indiv= 0
+            for i in range(0, self.nbrClients):  # 0,1,2,3
+                install_j= indiv[i+ self.nbrInstall] 
+                #print(install_j)  #1, 2, 1, 3
+                #print(indiv)
+                #print('coutAffect ligne et colonne',i, install_j -1)
+                Cout_j = self.CoutAffect[i][install_j -1]
+
+                d_i= self.Demande[i]
+
+                obj_indiv = obj_indiv + d_i* Cout_j
+            
+    #exemple d'indiv: [3, 1, 0,    1, 2, 1, 3]
 
 
-        #violation1:
-        Violation1=0
-        for j in range(1, self.nbrInstall+1):  #1,2,3
+            #violation1:
+            Violation1=0
+            for j in range(1, self.nbrInstall+1):  #1,2,3
 
-            #sommes des demandes affectes a une installaj
-            SumDemande_j= 0
-            for i in range(0, self.nbrClients): #0,1,2,3 --> 3,4,5,6
-                #print(indiv[i+ self.nbrInstall])
-                if indiv[i+ self.nbrInstall]==j:
-                    SumDemande_j += self.Demande[i]
-        
-            #somme des capacite pour l'install j
-            level_j= indiv[j-1] 
-            SumCapacite_j = self.Capacity[level_j-1]
+                #sommes des demandes affectes a une installaj
+                SumDemande_j= 0
+                for i in range(0, self.nbrClients): #0,1,2,3 --> 3,4,5,6
+                    #print(indiv[i+ self.nbrInstall])
+                    if indiv[i+ self.nbrInstall]==j:
+                        SumDemande_j += self.Demande[i]
+            
+                #somme des capacite pour l'install j
+                level_j= indiv[j-1] 
+                SumCapacite_j = self.Capacity[level_j-1]
 
-            maxi= max(0, SumDemande_j- SumCapacite_j)
-            Violation1 += maxi 
+                maxi= max(0, SumDemande_j- SumCapacite_j)
+                Violation1 += maxi 
 
 
-        #Violation2:
-        Violation2=0
-        #compter le nombre dinstallations qui sont affectes a des cliens et leurs niveau est 0.
-        for i in range(0, self.nbrClients):  #0,1,2,3
-            install_j = indiv[i+self.nbrInstall]  #indiv: 3,4,5,6
-            level_j = indiv[install_j-1]
-            if level_j == 0:
-                Violation2 +=1 
+            #Violation2:
+            Violation2=0
+            #compter le nombre dinstallations qui sont affectes a des cliens et leurs niveau est 0.
+            for i in range(0, self.nbrClients):  #0,1,2,3
+                install_j = indiv[i+self.nbrInstall]  #indiv: 3,4,5,6
+                level_j = indiv[install_j-1]
+                if level_j == 0:
+                    Violation2 +=1 
 
-        #violation3:
-        
-        sum3=0
-        for j in range(1,self.nbrInstall+1): #1,2,3
-            level_j = indiv[j-1]
-            sum3 = sum3 + self.CoutOuvert[level_j -1]
-        violation3= max(0, sum3 - self.B)
-        
-        
-        pen= obj_indiv+ coeff1* Violation1 + coeff2* Violation2+ coeff3* violation3
-        return pen  
+            #violation3:
+            
+            sum3=0
+            for j in range(1,self.nbrInstall+1): #1,2,3
+                level_j = indiv[j-1]
+                sum3 = sum3 + self.CoutOuvert[level_j -1]
+            violation3= max(0, sum3 - self.B)
+
+
+
+
+
+
+            
+            
+            pen= obj_indiv+ coeff1* Violation1 + coeff2* Violation2+ coeff3* violation3 
+            return pen   
 
 
         

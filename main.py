@@ -1,7 +1,15 @@
 from DE import *
 from JADE import *
+from problem_data import *
 
 num_evals_jade = 0
+num_generations = 100
+prob_dimension = 30
+nbr_installation = 15
+pop_size = 50
+scaling_F = 0.5
+Pcr = 0.7
+
 
 def f(I):
     global num_evals_jade
@@ -23,12 +31,12 @@ def f(I):
 
 i_execution = 0 
 
-def run():
-    num_generations = 100
+def run(prob_data):
+
     evals = []
     final_result = [] # [ DE/rand/1 : [best_eval , num_func_evals] , DE/best/1 : [best_eval , num_func_evals] , ... ]
     # DE/rand/1
-    differential_evolution = DE(50, 2, 0.5, 0.7,variant="DE",target_vector_selection_strategy="rand", number_differentials=1)
+    differential_evolution = DE(pop_size, prob_dimension, scaling_F, Pcr,nbr_installation,prob_data ,variant="DE",target_vector_selection_strategy="rand", number_differentials=1)
     list_evals_gen = differential_evolution.do_evolution(num_generations,verbose=False)
     list_evals_gen = np.array(list_evals_gen)
     best_eval_of_run = list_evals_gen.max()
@@ -38,7 +46,7 @@ def run():
     evals.append((list_evals_gen,"DE/rand/1"))
     
     # DE/best/1
-    differential_evolution = DE(50, 2, 0.5, 0.7,variant="DE",target_vector_selection_strategy="best", number_differentials=1)
+    differential_evolution = DE(pop_size, prob_dimension, scaling_F, Pcr,nbr_installation,prob_data ,variant="DE",target_vector_selection_strategy="best", number_differentials=1)
     list_evals_gen = differential_evolution.do_evolution(num_generations,verbose=False)
     list_evals_gen = np.array(list_evals_gen)
     best_eval_of_run = list_evals_gen.max()
@@ -48,7 +56,7 @@ def run():
     evals.append((list_evals_gen,"DE/best/1"))
 
     # DE/rand/2
-    differential_evolution = DE(50, 2, 0.5, 0.7,variant="DE",target_vector_selection_strategy="rand", number_differentials=2)
+    differential_evolution = DE(pop_size, prob_dimension, scaling_F, Pcr,nbr_installation, prob_data,variant="DE",target_vector_selection_strategy="rand", number_differentials=2)
     list_evals_gen = differential_evolution.do_evolution(num_generations,verbose=False)
     list_evals_gen = np.array(list_evals_gen)
     best_eval_of_run = list_evals_gen.max()
@@ -58,7 +66,7 @@ def run():
     evals.append((list_evals_gen,"DE/rand/2"))
     
     # DE/best/2
-    differential_evolution = DE(50, 2, 0.5, 0.7,variant="DE",target_vector_selection_strategy="best", number_differentials=2)
+    differential_evolution = DE(pop_size, prob_dimension, scaling_F, Pcr,nbr_installation,prob_data,variant="DE",target_vector_selection_strategy="best", number_differentials=2)
     list_evals_gen = differential_evolution.do_evolution(num_generations,verbose=False)
     list_evals_gen = np.array(list_evals_gen)
     best_eval_of_run = list_evals_gen.max()
@@ -68,7 +76,7 @@ def run():
     evals.append((list_evals_gen,"DE/best/2"))
     
     # DE/current-to-best/1
-    differential_evolution = DE(50, 2, 0.5, 0.7,variant="DE",target_vector_selection_strategy="current-to-best", number_differentials=1)
+    differential_evolution = DE(pop_size, prob_dimension, scaling_F, Pcr,nbr_installation,prob_data,variant="DE",target_vector_selection_strategy="current-to-best", number_differentials=1)
     list_evals_gen = differential_evolution.do_evolution(num_generations,verbose=False)
     list_evals_gen = np.array(list_evals_gen)
     best_eval_of_run = list_evals_gen.max()
@@ -78,7 +86,7 @@ def run():
     evals.append((list_evals_gen,"DE/current-to-best/1"))
     
     # DE/current-to-rand/1
-    differential_evolution = DE(50, 2, 0.5, 0.7,variant="DE",target_vector_selection_strategy="current-to-rand", number_differentials=1)
+    differential_evolution = DE(pop_size, prob_dimension, scaling_F, Pcr,nbr_installation,prob_data,variant="DE",target_vector_selection_strategy="current-to-rand", number_differentials=1)
     list_evals_gen = differential_evolution.do_evolution(num_generations,verbose=False)
     list_evals_gen = np.array(list_evals_gen)
     best_eval_of_run = list_evals_gen.max()
@@ -88,7 +96,7 @@ def run():
     evals.append((list_evals_gen,"DE/current-to-rand/1"))
     
     # CODE
-    differential_evolution = DE(50, 2, 0.5, 0.7,variant="CODE")
+    differential_evolution = DE(pop_size, prob_dimension, scaling_F, Pcr,nbr_installation,prob_data,variant="CODE")
     list_evals_gen = differential_evolution.do_evolution(num_generations,verbose=False)
     list_evals_gen = np.array(list_evals_gen)
     best_eval_of_run = list_evals_gen.max()
@@ -98,7 +106,7 @@ def run():
     evals.append((list_evals_gen,"CODE"))
     
     # JDE
-    differential_evolution = DE(50, 2, 0.5, 0.7,variant="JDE")
+    differential_evolution = DE(pop_size, prob_dimension, scaling_F, Pcr,nbr_installation,prob_data,variant="JDE")
     list_evals_gen = differential_evolution.do_evolution(num_generations,verbose=False)
     list_evals_gen = np.array(list_evals_gen)
     best_eval_of_run = list_evals_gen.max()
@@ -110,15 +118,16 @@ def run():
     # JADE
     #differential_evolution = DE(50, 2, 0.5, 0.7,variant="JADE")
     #evals.append((differential_evolution.do_evolution(num_generations,verbose=False),"JADE"))
-    
-    """modelJade = JADE(50, 7, 0.5, 0.7,[[0,3],[0,3], [0,3],    [1,3], [1,3], [1,3],[1,3]], 0 , f, 0.9, 3)
-    list_evals_gen = modelJade.main(num_generations,populationTest=None)[1]
+    #searchSpace=[[0,3],[0,3], [0,3],    [1,3], [1,3], [1,3],[1,3]]
+    problem1= Problem(prob_data.searchSpace, nbr_installation, prob_dimension-nbr_installation,prob_data.Demande,  prob_data.Capacity, prob_data.CoutAffect, prob_data.CoutOuvert, prob_data.B)
+    modelJade = JADE(problem1, pop_size, prob_dimension, scaling_F, Pcr,prob_data.searchSpace,0 , problem1.penalty, 0.9, nbr_installation)
+    list_evals_gen = modelJade.main(num_generations,populationTest=prob_data.pop)[1]
     list_evals_gen = np.array(list_evals_gen)
     best_eval_of_run = list_evals_gen.max()
     num_func_evals = num_evals_jade
     metric_of_variant_one_run = np.array([best_eval_of_run, num_func_evals])     # build metrics of the variant of one run  :  
     final_result.append(metric_of_variant_one_run)
-    evals.append((list_evals_gen,"JADE"))"""
+    evals.append((list_evals_gen,"JADE"))
 
 
     only_opt_evals = []
@@ -134,9 +143,12 @@ def run():
     return final_result
     
 if __name__ == "__main__":
-    final_res = run()
-    for i in range(29):
-        res = run()
+    # problem data
+    prob_data = problem_data(nbr_installation, prob_dimension - nbr_installation)
+
+    final_res = run(prob_data)
+    for i in range(2):
+        res = run(prob_data)
         for v,w,i in zip(final_res, res,range(len(final_res))):
             #print(f"===> v : ", v)
             #print(f"===> w : ", w)

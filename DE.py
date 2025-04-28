@@ -1,10 +1,11 @@
 import numpy as np
+import random
 import matplotlib.pyplot as plt
 from problem import *
 
 
 class DE:
-    def __init__(self, pop_size, prob_dimension, scaling_factor,Pcr, variant="DE" ,target_vector_selection_strategy="rand", number_differentials=1):
+    def __init__(self, pop_size, prob_dimension, scaling_factor,Pcr, nbr_installation,obj_func_eval, variant="DE" ,target_vector_selection_strategy="rand", number_differentials=1):
         """
         variant : "DE" , "CODE", ....
         target_vector_selection_strategy : "rand" , "best" , "current-to-best" , "current-to-rand"
@@ -20,12 +21,14 @@ class DE:
         self.number_of_differentials = number_differentials
         self.variant = variant
         self.num_execution_obj_func = 0
+        self.nbr_installation = nbr_installation
+        self.obj_function_evaluation = obj_func_eval
 
     
     def best_in_pop(self):
         evals = []
         for vect in self.pop:
-            ev = self.function_evaluation(vect)
+            ev = self.obj_function_evaluation.fct_objective(vect)
             evals.append(ev)
         best_value = min(evals)
         index_best_value = evals.index(best_value)
@@ -34,7 +37,7 @@ class DE:
     def best_in_pop_p(self, pop):
         evals = []
         for vect in pop:
-            ev = self.function_evaluation(vect)
+            ev = self.obj_function_evaluation.fct_objective(vect)
             evals.append(ev)
         best_value = min(evals)
         index_best_value = evals.index(best_value)
@@ -45,13 +48,14 @@ class DE:
         np.random.seed(5)
         pop = []
         for i in range(self.population_size):
-            x = np.random.randint(0,4,3) # search space
-            y = np.random.randint(1,4,4) # search space
+            x = np.random.randint(0,4,self.nbr_installation) # search space
+            y = np.random.randint(1,4,self.problem_dimension - self.nbr_installation) # search space
             z = np.append(x,y)
             pop.append(z)
         self.pop = pop
         # reset the randomness of generation 
         np.random.seed()
+        #print(f"=====>>>>poopiiiii : \n", pop)
         return pop
     
     def current_to_best_mutation(self, vect_i):
@@ -165,13 +169,13 @@ class DE:
             trial_vector = self.rand_mutation(self.target_vector_selection_strategy, self.number_of_differentials)
 
         # chzck validity
-        for i in range(3):
+        for i in range(self.nbr_installation):
             if trial_vector[i] < 0:
                 trial_vector[i] = 0
             elif trial_vector[i] > 3:
                 trial_vector[i] = 3
         
-        for i in range(3,7):
+        for i in range(self.nbr_installation, self.problem_dimension):
             if trial_vector[i] < 1:
                 trial_vector[i] = 1
             elif trial_vector[i] > 3:
@@ -190,9 +194,9 @@ class DE:
             # n: index of first element to take from the trial_vector
             # L: length of elements taken from trial_vector
             while(True):
-                n = np.random.randint(0, 3)
-                L = np.random.randint(1, 3+1)
-                if 3 - n >= L:
+                n = np.random.randint(0, self.nbr_installation)
+                L = np.random.randint(1, self.nbr_installation+1)
+                if self.nbr_installation - n >= L:
                     break
             
             for i in range(L):
@@ -200,9 +204,9 @@ class DE:
 
             # 2nd crossover for other half
             while(True):
-                n = np.random.randint(3, 7)
-                L = np.random.randint(1, 4+1)
-                if 7 - n >= L:
+                n = np.random.randint(self.nbr_installation, self.problem_dimension)
+                L = np.random.randint(1, self.problem_dimension-self.nbr_installation+1)
+                if self.problem_dimension - n >= L:
                     break
             
             for i in range(L):
@@ -313,17 +317,19 @@ class DE:
 
         return evals_of_generations
 
-
-
-    def function_evaluation(self,point):
-        """
-        point : is a tuple of (x,y)
-        """
+    def function_evaluation(self, point):
         self.num_execution_obj_func += 1
-        #return np.square(point[0]) + np.square(point[1])
-        
-        nbreInstall =3
-        nbreClients =4 # prob dimension = 7
+        return self.obj_function_evaluation.function_evaluation(point)
+
+
+"""
+    def function_evaluation(self,point):
+        self.num_execution_obj_func += 1
+
+        nbreInstall = self.nbr_installation
+        nbreClients = self.problem_dimension - self.nbr_installation # prob dimension = 7
+        Demande, Capacity, CoutAffect, CoutOuvert, B = GenerateProbParam(nbreInstall, nbreClients)
+
         Demande = [30, 89, 78, 99]
         Capacity = [400, 600, 300]
         CoutAffect =[[50, 40, 30],   
@@ -334,3 +340,4 @@ class DE:
         B= 40000
         problem1= Problem(nbreInstall, nbreClients,Demande,  Capacity, CoutAffect, CoutOuvert, B)
         return problem1.penalty(point)
+"""
