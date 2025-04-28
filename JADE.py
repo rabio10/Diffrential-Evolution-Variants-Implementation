@@ -24,7 +24,7 @@ class DiffEvolution:
             indiv=[]
             index = 0
             for j in range(self.probDim):
-                new= round(random.uniform(self.searchSpace[index][0], self.searchSpace[index][1] ),2)
+                new= round(random.randint(self.searchSpace[index][0], self.searchSpace[index][1] ),2)
                 #print(new)
                 indiv.append(new)
                 index +=1
@@ -142,7 +142,7 @@ class DiffEvolution:
 
 
 class JADE(DiffEvolution):
-    def __init__(self, populationSize, problemDim, scalingFactor, crossOverProb, searchSpace, stopCriteria, fitnessFunt, p):
+    def __init__(self, populationSize, problemDim, scalingFactor, crossOverProb, searchSpace, stopCriteria, fitnessFunt, p, NbrInstallations):
         super().__init__(populationSize, problemDim, scalingFactor, crossOverProb, searchSpace, stopCriteria, fitnessFunt)
         self.SCR = None
         self.SF = None
@@ -155,6 +155,7 @@ class JADE(DiffEvolution):
 
         self.CR_list=[]
         self.F_list=[]
+        self.nbrInstall= NbrInstallations
 
 
     #Initialisation same as parent Class.. no need to overwrite it
@@ -183,16 +184,33 @@ class JADE(DiffEvolution):
                     parentVect[para])+ self.F_list[IndexParentVect]*(randomIndiv1[para] - randomIndiv2[para])
             return mutantVect
     
+    #exemple d'indiv: [3, 1, 0,    1, 2, 1, 3]
+    #nbrInstall = 3
     def CrossOver(self, population, IndexParentVect, mutantVect):
-        parentVect= population[IndexParentVect]
+        parentVectP1= population[IndexParentVect][0: self.nbrInstall] #[3, 1, 0]
+        parentVectP2= population[IndexParentVect][self.nbrInstall:] #[1, 2, 1, 3]
+
         trialVect=[0 for i in range(len(mutantVect))]
-        j_rand= random.randint(1, self.probDim)
-        for i in range(self.probDim):
+
+        #for part1 (les installations dans l'indiv)
+        j_rand1= random.randint(0, self.nbrInstall-1) #0,1,2
+        for i in range(self.nbrInstall): #0,1,2
             prob= random.random()
-            if i== j_rand or prob< self.CR_list[IndexParentVect]:
+            if i== j_rand1 or prob< self.CR_list[IndexParentVect]:
                 trialVect[i] = mutantVect[i]
             else: 
-                trialVect[i] = parentVect[i]
+                trialVect[i] = parentVectP1[i]
+        #return trialVect
+    
+        #for Prt2 (les clients dans l'indiv)
+        j_rand2= random.randint(self.nbrInstall, self.probDim-1)
+        for i in range(self.nbrInstall, self.probDim):
+            prob= random.random()
+            if i== j_rand2 or prob< self.CR_list[IndexParentVect]:
+                trialVect[i] = mutantVect[i]
+            else: 
+                trialVect[i] = parentVectP2[i-3]
+
         return trialVect
     
 
@@ -238,6 +256,7 @@ class JADE(DiffEvolution):
 
 
             #Calculate minFitFunct for eachGeneration
+            print(population)
             evalGen= [self.fitFunct(i) for i in population]
             evalMin= min(evalGen)
             E.append(evalMin)

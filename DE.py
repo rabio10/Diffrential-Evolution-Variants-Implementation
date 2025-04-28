@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from problem import *
 
 
 class DE:
@@ -44,8 +45,10 @@ class DE:
         np.random.seed(5)
         pop = []
         for i in range(self.population_size):
-            x = np.random.uniform(-5,5,self.problem_dimension)
-            pop.append(x)
+            x = np.random.randint(0,4,3) # search space
+            y = np.random.randint(1,4,4) # search space
+            z = np.append(x,y)
+            pop.append(z)
         self.pop = pop
         # reset the randomness of generation 
         np.random.seed()
@@ -161,14 +164,18 @@ class DE:
             # compute trial_vector depending on strategy : rand/1 , best/1 , rand/2 , best/2
             trial_vector = self.rand_mutation(self.target_vector_selection_strategy, self.number_of_differentials)
 
-        if trial_vector[0] < -5:
-            trial_vector[0] = -5
-        elif trial_vector[0] > 5:
-            trial_vector[0] = 5
-        if trial_vector[1] < -5:
-            trial_vector[1] = -5
-        elif trial_vector[1] > 5:
-            trial_vector[1] = 5
+        # chzck validity
+        for i in range(3):
+            if trial_vector[i] < 0:
+                trial_vector[i] = 0
+            elif trial_vector[i] > 3:
+                trial_vector[i] = 3
+        
+        for i in range(3,7):
+            if trial_vector[i] < 1:
+                trial_vector[i] = 1
+            elif trial_vector[i] > 3:
+                trial_vector[i] = 3
 
         return trial_vector
 
@@ -183,13 +190,24 @@ class DE:
             # n: index of first element to take from the trial_vector
             # L: length of elements taken from trial_vector
             while(True):
-                n = np.random.randint(0, self.problem_dimension)
-                L = np.random.randint(1, self.problem_dimension+1)
-                if self.problem_dimension - n >= L:
+                n = np.random.randint(0, 3)
+                L = np.random.randint(1, 3+1)
+                if 3 - n >= L:
                     break
             
             for i in range(L):
                 new_vect[n+i] = trial_vector[n+i]
+
+            # 2nd crossover for other half
+            while(True):
+                n = np.random.randint(3, 7)
+                L = np.random.randint(1, 4+1)
+                if 7 - n >= L:
+                    break
+            
+            for i in range(L):
+                new_vect[n+i] = trial_vector[n+i]
+
             # decide who's best (to live or die)
             new_vect_evaluation = self.function_evaluation(new_vect)
             parent_eval = self.function_evaluation(parent_vector)
@@ -298,8 +316,21 @@ class DE:
 
 
     def function_evaluation(self,point):
-            """
-            point : is a tuple of (x,y)
-            """
-            self.num_execution_obj_func += 1
-            return np.square(point[0]) + np.square(point[1])
+        """
+        point : is a tuple of (x,y)
+        """
+        self.num_execution_obj_func += 1
+        #return np.square(point[0]) + np.square(point[1])
+        
+        nbreInstall =3
+        nbreClients =4 # prob dimension = 7
+        Demande = [30, 89, 78, 99]
+        Capacity = [400, 600, 300]
+        CoutAffect =[[50, 40, 30],   
+                    [70, 60, 20],
+                    [10, 80, 90],
+                    [10, 80, 90]]
+        CoutOuvert= [3000, 8000, 5000]
+        B= 40000
+        problem1= Problem(nbreInstall, nbreClients,Demande,  Capacity, CoutAffect, CoutOuvert, B)
+        return problem1.penalty(point)

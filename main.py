@@ -6,7 +6,20 @@ num_evals_jade = 0
 def f(I):
     global num_evals_jade
     num_evals_jade += 1
-    return sum(i**2 for i in I)
+
+    nbreInstall =3
+    nbreClients =4 # prob dimension = 7
+    Demande = [30, 89, 78, 99]
+    Capacity = [400, 600, 300]
+    CoutAffect =[[50, 40, 30],   
+                [70, 60, 20],
+                [10, 80, 90],
+                [10, 80, 90]]
+    CoutOuvert= [3000, 8000, 5000]
+    B= 40000
+    problem1= Problem(nbreInstall, nbreClients,Demande,  Capacity, CoutAffect, CoutOuvert, B)
+    return problem1.penalty(I)
+
 
 i_execution = 0 
 
@@ -98,30 +111,31 @@ def run():
     #differential_evolution = DE(50, 2, 0.5, 0.7,variant="JADE")
     #evals.append((differential_evolution.do_evolution(num_generations,verbose=False),"JADE"))
     
-    modelJade = JADE(50, 2, 0.5, 0.7,[[-5,5],[-5,5], [4,8], [3, 8]], 0 , f, 0.9)
+    """modelJade = JADE(50, 7, 0.5, 0.7,[[0,3],[0,3], [0,3],    [1,3], [1,3], [1,3],[1,3]], 0 , f, 0.9, 3)
     list_evals_gen = modelJade.main(num_generations,populationTest=None)[1]
     list_evals_gen = np.array(list_evals_gen)
     best_eval_of_run = list_evals_gen.max()
     num_func_evals = num_evals_jade
     metric_of_variant_one_run = np.array([best_eval_of_run, num_func_evals])     # build metrics of the variant of one run  :  
     final_result.append(metric_of_variant_one_run)
-    evals.append((list_evals_gen,"JADE"))
+    evals.append((list_evals_gen,"JADE"))"""
 
 
     only_opt_evals = []
     for i in range(len(evals)):
         plt.plot(range(num_generations),evals[i][0], label = evals[i][1])
-        only_opt_evals = min(evals[i][0])
+        only_opt_evals.append(min(evals[i][0]))
     plt.legend()
     plt.savefig("plots/plot_exec_"+ str(i_execution))
     #plt.show()
+    plt.close()
     only_opt_evals = np.array(only_opt_evals)
     print(f"the optimal evaluation : {np.min(only_opt_evals)} with {evals[np.argmin(only_opt_evals)][1]}")
     return final_result
     
 if __name__ == "__main__":
     final_res = run()
-    for i in range(3):
+    for i in range(29):
         res = run()
         for v,w,i in zip(final_res, res,range(len(final_res))):
             #print(f"===> v : ", v)
