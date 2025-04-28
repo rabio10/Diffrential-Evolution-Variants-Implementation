@@ -18,12 +18,13 @@ class DE:
         self.target_vector_selection_strategy = target_vector_selection_strategy
         self.number_of_differentials = number_differentials
         self.variant = variant
+        self.num_execution_obj_func = 0
 
     
     def best_in_pop(self):
         evals = []
         for vect in self.pop:
-            ev = function_evaluation(vect)
+            ev = self.function_evaluation(vect)
             evals.append(ev)
         best_value = min(evals)
         index_best_value = evals.index(best_value)
@@ -32,7 +33,7 @@ class DE:
     def best_in_pop_p(self, pop):
         evals = []
         for vect in pop:
-            ev = function_evaluation(vect)
+            ev = self.function_evaluation(vect)
             evals.append(ev)
         best_value = min(evals)
         index_best_value = evals.index(best_value)
@@ -190,8 +191,8 @@ class DE:
             for i in range(L):
                 new_vect[n+i] = trial_vector[n+i]
             # decide who's best (to live or die)
-            new_vect_evaluation = function_evaluation(new_vect)
-            parent_eval = function_evaluation(parent_vector)
+            new_vect_evaluation = self.function_evaluation(new_vect)
+            parent_eval = self.function_evaluation(parent_vector)
             if new_vect_evaluation < parent_eval:
                 return new_vect
             else:
@@ -226,7 +227,7 @@ class DE:
                     trial_vect = self.mutation(parent_vect)
                     # crossover
                     new_vect = self.crossover(parent_vect, trial_vect)
-                    ev = function_evaluation(new_vect)
+                    ev = self.function_evaluation(new_vect)
                     # add to list
                     new_vects.append(new_vect)
                     evals_of_new_vects.append(ev)
@@ -296,8 +297,9 @@ class DE:
 
 
 
-def function_evaluation(point):
-        """
-        point : is a tuple of (x,y)
-        """
-        return np.square(point[0]) + np.square(point[1])
+    def function_evaluation(self,point):
+            """
+            point : is a tuple of (x,y)
+            """
+            self.num_execution_obj_func += 1
+            return np.square(point[0]) + np.square(point[1])
